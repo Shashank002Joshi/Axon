@@ -1,0 +1,128 @@
+specVersion: 0.0.5
+schema:
+  file: ./schema.graphql
+dataSources:
+  # Bounty Factory
+  - kind: ethereum
+    name: BountyFactory
+    network: arbitrum-one
+    source:
+      address: "0x2353605c2577Fc316d2D3804A469969EF3F2A432" # BountyFactory address
+      abi: BountyFactory
+      startBlock: 150000000
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Bounty
+        - User
+        - DailyStats
+      abis:
+        - name: BountyFactory
+          file: ./abis/BountyFactory.json
+      eventHandlers:
+        - event: BountyCreated(indexed uint256,indexed address,indexed address,uint256)
+          handler: handleBountyCreated
+      file: ./src/bountyFactory.ts
+
+  # Expert Registry
+  - kind: ethereum
+    name: ExpertRegistry
+    network: arbitrum-one
+    source:
+      address: "0x20a4Fa5E0b37f2B2bCF2D49f3c8B66fb61F44FCF" # ExpertRegistry address
+      abi: ExpertRegistry
+      startBlock: 150000000
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Expert
+      abis:
+        - name: ExpertRegistry
+          file: ./abis/ExpertRegistry.json
+      eventHandlers:
+        - event: ExpertRegistered(indexed uint256,indexed address,indexed address)
+          handler: handleExpertRegistered
+        - event: ExpertActivated(indexed address)
+          handler: handleExpertActivated
+      file: ./src/expertRegistry.ts
+
+  # Reputation NFT
+  - kind: ethereum
+    name: ReputationNFT
+    network: arbitrum-one
+    source:
+      address: "0x098eb68De2eCc82F3B0089AE870Af5B55B02dDc5"
+      abi: ReputationNFT
+      startBlock: 150000000
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Expert
+      abis:
+        - name: ReputationNFT
+          file: ./abis/ReputationNFT.json
+      eventHandlers:
+        - event: ReputationUpdated(indexed address,uint256)
+          handler: handleReputationUpdated
+      file: ./src/reputation.ts
+
+  # Liquidity Pool
+  - kind: ethereum
+    name: ExpertTokenLiquidityPool  
+    network: arbitrum-one
+    source:
+      address: "0x20a4Fa5E0b37f2B2bCF2D49f3c8B66fb21F44FCF"
+      abi: ExpertTokenLiquidityPool
+      startBlock: 150000000
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - TokenTrade
+        - Expert
+        - User
+      abis:
+        - name: ExpertTokenLiquidityPool
+          file: ./abis/ExpertTokenLiquidityPool.json
+      eventHandlers:
+        - event: TokensPurchased(indexed address,indexed address,uint256,uint256)
+          handler: handleTokensPurchased
+        - event: TokensSold(indexed address,indexed address,uint256,uint256)  
+          handler: handleTokensSold
+      file: ./src/liquidityPool.ts
+
+# Dynamic data sources for individual bounty contracts
+templates:
+  - kind: ethereum/contract
+    name: Bounty
+    network: arbitrum-one
+    source:
+      abi: Bounty
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Answer
+        - CuratorStake
+        - Bounty
+      abis:
+        - name: Bounty
+          file: ./abis/Bounty.json
+      eventHandlers:
+        - event: AnswerSubmitted(indexed uint256,indexed address,string)
+          handler: handleAnswerSubmitted
+        - event: StakeAdded(indexed uint256,indexed address,uint256)
+          handler: handleStakeAdded
+        - event: WinnerSelected(indexed uint256,indexed address)
+          handler: handleWinnerSelected
+        - event: BountyResolved(indexed uint256,uint256)
+          handler: handleBountyResolved
+      file: ./src/bounty.ts

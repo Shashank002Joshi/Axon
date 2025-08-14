@@ -1,0 +1,142 @@
+# Core entities
+type Bounty @entity {
+  id: ID! # bountyId
+  bountyAddress: Bytes!
+  seeker: User!
+  question: String!
+  amount: BigInt!
+  deadline: BigInt!
+  state: BountyState!
+  createdAt: BigInt!
+  resolvedAt: BigInt
+  winner: Expert
+  winningAnswer: Answer
+  
+  # Relationships
+  answers: [Answer!]! @derivedFrom(field: "bounty")
+  stakes: [CuratorStake!]! @derivedFrom(field: "bounty")
+  
+  # Aggregated data
+  totalAnswers: BigInt!
+  totalStakes: BigInt!
+  avgAnswerTime: BigInt!
+  domain: String!
+}
+
+type Expert @entity {
+  id: ID! # expert address
+  name: String!
+  expertToken: Bytes!
+  domains: [String!]!
+  registrationTime: BigInt!
+  isActivated: Boolean!
+  
+  # Reputation data
+  reputationScore: BigInt!
+  totalBounties: BigInt!
+  bountyWins: BigInt!
+  winRate: BigDecimal!
+  avgCuratorStake: BigInt!
+  
+  # Token data
+  tokenPrice: BigInt!
+  tokenMarketCap: BigInt!
+  totalLiquidity: BigInt!
+  
+  # Relationships
+  answers: [Answer!]! @derivedFrom(field: "solver")
+  wonBounties: [Bounty!]! @derivedFrom(field: "winner")
+  tokenTrades: [TokenTrade!]! @derivedFrom(field: "expert")
+}
+
+type Answer @entity {
+  id: ID! # bounty-answer composite
+  bounty: Bounty!
+  solver: Expert!
+  ipfsHash: String!
+  metadataURI: String!
+  submissionTime: BigInt!
+  totalStakes: BigInt!
+  isWinner: Boolean!
+  
+  # Relationships  
+  stakes: [CuratorStake!]! @derivedFrom(field: "answer")
+}
+
+type CuratorStake @entity {
+  id: ID! # bounty-answer-curator composite
+  bounty: Bounty!
+  answer: Answer!
+  curator: User!
+  amount: BigInt!
+  timestamp: BigInt!
+  rewarded: Boolean!
+  rewardAmount: BigInt!
+}
+
+type User @entity {
+  id: ID! # user address
+  # As Seeker
+  bountiesCreated: [Bounty!]! @derivedFrom(field: "seeker")
+  totalBountiesPosted: BigInt!
+  totalBountyValue: BigInt!
+  
+  # As Curator  
+  stakes: [CuratorStake!]! @derivedFrom(field: "curator")
+  totalStaked: BigInt!
+  totalRewards: BigInt!
+  successfulStakes: BigInt!
+  
+  # Token trading
+  tokenTrades: [TokenTrade!]! @derivedFrom(field: "trader")
+  portfolioValue: BigInt!
+}
+
+type TokenTrade @entity {
+  id: ID! # tx hash + log index
+  expert: Expert!
+  trader: User!
+  type: TradeType! # BUY or SELL
+  ethAmount: BigInt!
+  tokenAmount: BigInt!
+  price: BigInt!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+}
+
+# Enums
+enum BountyState {
+  ACTIVE
+  WINNER_SELECTED  
+  APPEALED
+  RESOLVED
+  CANCELLED
+}
+
+enum TradeType {
+  BUY
+  SELL
+}
+
+# Analytics entities
+type DailyStats @entity {
+  id: ID! # date in YYYY-MM-DD
+  date: String!
+  totalBounties: BigInt!
+  totalBountyValue: BigInt!
+  totalAnswers: BigInt!
+  totalExperts: BigInt!
+  totalStakes: BigInt!
+  avgBountyValue: BigInt!
+  avgAnswersPerBounty: BigDecimal!
+}
+
+type DomainStats @entity {
+  id: ID! # domain name
+  domain: String!
+  bountyCount: BigInt!
+  totalValue: BigInt!
+  avgValue: BigInt!
+  expertCount: BigInt!
+  topExperts: [Expert!]!
+}
